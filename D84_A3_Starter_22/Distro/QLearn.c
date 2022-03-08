@@ -50,8 +50,16 @@ void QLearn_update(int s, int a, double r, int s_new, double *QTable)
   /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/
-
+  //Assume mode standard
+  double max_value = -1*INFINITY;
   
+  for(int i = 0; i < 4; i++){
+    max_value = *(QTable+(4*s_new)+i) > max_value ? *(QTable+(4*s_new)+i) : max_value;
+  }
+
+  *(QTable+(4*s)+a) = alpha*(r + lambda*max_value - *(QTable+(4*s)+a));
+  
+  return;
 }
 
 int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], double pct, double *QTable, int size_X, int graph_size)
@@ -129,17 +137,71 @@ int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5]
   /***********************************************************************************************
    * TO DO: Complete this function
    ***********************************************************************************************/  
+  double c = (double)rand()/(double)RAND_MAX;
+  int a;
+  
+  int i = mouse_pos[0][0];
+  int j = mouse_pos[0][1];
+  int k = cats[0][0];
+  int l = cats[0][1];
+  int m = cheeses[0][0];
+  int n = cheeses[0][1];
+  int state = (i+(j*size_X)) + ((k+(l*size_X))*graph_size) + ((m+(n*size_X))*graph_size*graph_size);
+  //printf("called Qlearn action\n");
+  if (c > pct){
+    a = rand() % 4;
+    //printf("sizex %d, maxsize %d, mouse_pos %d, i %d, j %d\n", size_X, max_graph_size, (i+(j*size_X)), i , j);
+    // printf("action %d, wall %f, location (%d, %d)\n", a, gr[(i+(j*size_X))][a], i,j);
 
-  return(0);		// <--- of course, you will change this!
+    while(!gr[(i+(j*size_X))][a]){
+      a = rand() % 4;
+      // printf("action %d, wall %f\n", a, gr[(i+(j*size_X))][a]);
+      // exit(0);
+      //printf("sizex %d, maxsize %d, mouse_pos %d, i %d, j %d\n", size_X, max_graph_size, (i+(j*size_X)), i , j);
+    }
+  }else{
+    double max_value = -1*INFINITY;    
+    for(int index = 0; index < 4; index++){
+        if(gr[(i+(j*size_X))][index] && *(QTable+(4*state)+index) > max_value){
+          max_value = *(QTable+(4*state)+index);
+          a = index;
+        }
+    }
+  }
+
+  if (a == 0) {
+    j--;
+  } else if (a == 1) {
+    i++;
+  } else if (a == 2) {
+    j++;
+  } else {
+    i--;
+  }
+  
+  int state_new = (i+(j*size_X)) + ((k+(l*size_X))*graph_size) + ((m+(n*size_X))*graph_size*graph_size);
+
+  int new_mouse_pos[1][2];
+  new_mouse_pos[0][0] = i;
+  new_mouse_pos[0][1] = j;
+  int r =  QLearn_reward(gr, new_mouse_pos, cats, cheeses, size_X, graph_size);
+
+  QLearn_update(state, a, r, state_new, QTable);
+  
+  return(a);		// <--- of course, you will change this!
   
 }
 
 double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
 {
   /*
+    number of states for standard = (sizexXsizex)+(sizexXsizex)+(sizexXsizex)
+    States = mouse + numcats*cat*(sizexXsizex) + cheese*(sizexXsizex)*numcheese*numcats*(sizexXsizex)
+
+
     This function computes and returns a reward for the state represented by the input mouse, cat, and
     cheese position. 
-    
+
     You can make this function as simple or as complex as you like. But it should return positive values
     for states that are favorable to the mouse, and negative values for states that are bad for the 
     mouse.
@@ -152,9 +214,17 @@ double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats
 
    /***********************************************************************************************
    * TO DO: Complete this function
-   ***********************************************************************************************/ 
+   ***********************************************************************************************/
 
-  return(0);		// <--- of course, you will change this as well!     
+  //Assume mode standatd
+  double reward = 0;
+  if (mouse_pos[0][0] == cats[0][0] && mouse_pos[0][1] == cats[0][1]) {
+    reward -= 100;
+  }  else if (mouse_pos[0][0] == cheeses[0][0] && mouse_pos[0][1] == cheeses[0][1]) {
+    reward += 150;
+  }
+
+  return(reward);   
 }
 
 void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double reward, int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
@@ -260,3 +330,16 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
  *  Add any functions needed to compute your features below 
  *                 ---->  THIS BOX <-----
  * *************************************************************************************************/
+
+void state_to_locations(double state, double *cat, double *cheese, double *mouse, int num_cats, int num_cheese){
+
+  //if mode standard
+  //States = mouse + numcats*cat*(graphsize) + cheese*(graphsize)*numcheese*numcats*(graphsize)
+
+  //States = mouse + cat*(graphsize) + cheese*(graphsize)*(graphsize)
+
+  *cheese = floor(state/pow(gsizeX, 4));
+  *cat = floor((state-(*cheese * pow(gsizeX, 4)))/(pow(gsizeX, 2)));
+  *mouse = state - *cheese*pow(gsizeX, 4) - *cheese*pow(gsizeX, 2);
+  return;
+}

@@ -47,5 +47,7 @@ void expensiveFeature1(double gr[max_graph_size][4], int path[max_graph_size][2]
 int checkForGoal(int x, int y, int pos[5][2]);
 
 // If you need to add any function prototypes yourself, you can do so *below* this line.
+int gsizeX;
+void state_to_locations(double state, double *cat, double *cheese, double *mouse, int num_cats, int num_cheese);
 #endif
 
