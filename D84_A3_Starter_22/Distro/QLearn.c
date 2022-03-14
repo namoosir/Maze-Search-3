@@ -366,8 +366,9 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
 
   features[0] = cheese_dist/num_cheese;
   features[1] = cat_dist/num_cats;
-  features[2] = 4 - (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3]);
-
+  // features[2] = 4 - (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3]);
+  features[2] = rand() % 10;
+  features[3] = abs(cats[0][0] - cheeses[0][0]) + abs(cats[0][1] - cheeses[0][1]);
   
 }
 
