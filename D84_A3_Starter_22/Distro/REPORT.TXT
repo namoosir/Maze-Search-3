@@ -4,17 +4,17 @@ Assignment 3 - Reinforcement Learning - Q Learning
 
 ________________________________________________
 
-Student Name 1 (last, first):
+Student Name 1 (last, first): Kharsa, Mutasem
 
-Student Name 2 (last, first):
+Student Name 2 (last, first): Saqeeb, Nazmus
 
-Student number 1:
+Student number 1: 1006211083
 
-Student number 2:
+Student number 2: 1006306007
 
-UTORid 1:
+UTORid 1: kharsamu
 
-UTORid 2:
+UTORid 2: saqeebna
 
 READ THIS AND SIGN YOUR NAME AT THE END:
 
@@ -22,7 +22,7 @@ READ THIS AND SIGN YOUR NAME AT THE END:
 honesty and plaguarism. All work submitted as part
 of this assignment is my own.
 
-	Signed: _(student 1 name here)__	_(student 2 name here)__
+	Signed: _Mutasem Kharsa_	_Nazmus Saqeeb__
 
 
 (-5 marks for failing to provide the identifying

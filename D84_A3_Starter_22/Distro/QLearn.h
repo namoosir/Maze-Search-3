@@ -30,7 +30,7 @@
 #define lambda .5			// Discount rate for future rewards
 #define max_graph_size 32*32
 
-#define numFeatures 2			// UPDATE THIS to be the number of features you have
+#define numFeatures 3			// UPDATE THIS to be the number of features you have
 
 // Function prototypes for D84 - Unit 3 - Reinforcement Learning
 void QLearn_update(int s, int a, double r, int s_new, double *QTable);
@@ -48,6 +48,8 @@ int checkForGoal(int x, int y, int pos[5][2]);
 
 // If you need to add any function prototypes yourself, you can do so *below* this line.
 int gsizeX;
+double old_features[25];
+
 void state_to_locations(double state, double *cat, double *cheese, double *mouse, int num_cats, int num_cheese);
 #endif
 
