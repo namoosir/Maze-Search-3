@@ -147,17 +147,11 @@ int QLearn_action(double gr[max_graph_size][4], int mouse_pos[1][2], int cats[5]
   int m = cheeses[0][0];
   int n = cheeses[0][1];
   int state = (i+(j*size_X)) + ((k+(l*size_X))*graph_size) + ((m+(n*size_X))*graph_size*graph_size);
-  //printf("called Qlearn action\n");
   if (c > pct){
     a = rand() % 4;
-    //printf("sizex %d, maxsize %d, mouse_pos %d, i %d, j %d\n", size_X, max_graph_size, (i+(j*size_X)), i , j);
-    // printf("action %d, wall %f, location (%d, %d)\n", a, gr[(i+(j*size_X))][a], i,j);
 
     while(!gr[(i+(j*size_X))][a]){
       a = rand() % 4;
-      // printf("action %d, wall %f\n", a, gr[(i+(j*size_X))][a]);
-      // exit(0);
-      //printf("sizex %d, maxsize %d, mouse_pos %d, i %d, j %d\n", size_X, max_graph_size, (i+(j*size_X)), i , j);
     }
   }else{
     double max_value = -1*INFINITY;    
@@ -216,12 +210,22 @@ double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats
 
   //Assume mode standatd
   double reward = 0;
-  if (mouse_pos[0][0] == cats[0][0] && mouse_pos[0][1] == cats[0][1]) {
-    reward -= 0.9;
-  }  else if (mouse_pos[0][0] == cheeses[0][0] && mouse_pos[0][1] == cheeses[0][1]) {
-    reward += 1;
+  int num_cats = 0, num_cheese = 0;
+  for (int i = 0; i < 5; i++){
+    if (cats[i][0] != -1) num_cats++;
+    if (cheeses[i][0] != -1) num_cheese++;
+  }
+  
+  for (int i = 0; i < num_cats; i++){
+    if (mouse_pos[0][0] == cats[i][0] && mouse_pos[0][1] == cats[i][1])
+      reward -= 0.9;
   }
 
+  for (int i = 0; i < num_cheese; i++){
+    if (mouse_pos[0][0] == cheeses[0][0] && mouse_pos[0][1] == cheeses[0][1])
+      reward += 1/num_cheese;
+  }
+  
   return(reward);   
 }
 
@@ -244,13 +248,32 @@ void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double 
   // numcalled++;
   // if(numcalled == 99999){
   //   numcalled = 0;
-  //   // printf("weights are %f %f %f\n", weights[0],weights[1],weights[2]);
+  //   printf("weights are %f %f %f\n", weights[0],weights[1],weights[2]);
   // }
   
   double new_features[25];
   evaluateFeatures(gr, new_features, mouse_pos, cats, cheeses, size_X, graph_size);
 
+  // double newer_features[25];
+  // int best_action = feat_QLearn_action(gr, weights, mouse_pos, cats, cheeses, 1, size_X, graph_size);
+  // int newer_mouse_pos[1][2];
+  // newer_mouse_pos[0][0] = mouse_pos[0][0];
+  // newer_mouse_pos[0][1] = mouse_pos[0][1];
+
+  // if (best_action == 0) {
+  //   newer_mouse_pos[0][1]--;
+  // } else if (best_action == 1) {
+  //   newer_mouse_pos[0][0]++;
+  // } else if (best_action == 2) {
+  //   newer_mouse_pos[0][1]++;
+  // } else {
+  //   newer_mouse_pos[0][0]--;
+  // }
+
+  // evaluateFeatures(gr, newer_features, newer_mouse_pos, cats, cheeses, size_X, graph_size);
+
   for (int i = 0; i<numFeatures; i++){
+    // weights[i] += alpha*(reward + lambda*Qsa(weights, newer_features) - Qsa(weights, new_features))*new_features[i];
     weights[i] += alpha*(reward + lambda*Qsa(weights, new_features) - Qsa(weights, old_features))*old_features[i];
   }
 
@@ -363,12 +386,21 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
     cat_dist += abs(mouse_pos[0][0] - cats[i][0])+abs(mouse_pos[0][1] - cats[i][1]);
   }
 
-  features[0] = cheese_dist/num_cheese;
-  features[1] = cat_dist/num_cats;
-  //features[2] = 4 - (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3]);
-  features[2] = rand() % 10;
-  features[3] = abs(cats[0][0] - cheeses[0][0]) + abs(cats[0][1] - cheeses[0][1]);
-  
+  features[0] = ((cheese_dist+1)/num_cheese)/graph_size;
+  features[1] = ((cat_dist+1)/num_cats)/graph_size;
+  features[2] = rand() % 3;
+  features[3] = (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3])/4;
+  //DIstance to closest cheese
+  //Distance to closet cat
+    // features[3] = rand() % 5;
+  features[4] = cheese_dist/graph_size;
+  features[5] = cat_dist/graph_size;
+  // features[6] = (mouse_pos[0][0])/(double)size_X;
+  // features[7] = (mouse_pos[0][1])/(double)size_X;
+
+  // printf("features[0] = %f, features[1] = %f, features[2] = %f, features[4] = %f\n", features[0], features[1], features[2], features[4]);
+
+  //add all cat distances as sperate features and all cheese distancews
 }
 
 double Qsa(double weights[25], double features[25])
@@ -429,35 +461,13 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
     
     new_mouse_pos[0][0] = i;
     new_mouse_pos[0][1] = j;
-    // for (int x = 0; x < 5; x++) {
-    //   if (cats[x][0] == -1) break;
+  
+    evaluateFeatures(gr, features, new_mouse_pos, cats, cheeses, size_X, graph_size);
 
-      // for (int y = 0; y < 4; y++) {
-      //   int tempx = cats[0][0];
-      //   int tempy = cats[0][1];
-
-      //   if (y == 0) {
-      //     tempy--;
-      //   } else if (y == 1) {
-      //     tempx++;
-      //   } else if (y == 2) {
-      //     tempy++;
-      //   } else {
-      //     tempx--;
-      //   }
-
-      //   new_cats[0][0] = tempx;
-      //   new_cats[0][1] = tempy;
-
-        evaluateFeatures(gr, features, new_mouse_pos, cats, cheeses, size_X, graph_size);
-
-        if(gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][index] && Qsa(weights,features) > *maxU){
-          *maxU = Qsa(weights,features);
-          *maxA = index;
-        }
-      // }
-    // }
-    
+    if(gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][index] && Qsa(weights,features) > *maxU){
+      *maxU = Qsa(weights,features);
+      *maxA = index;
+    }
   }
 
   return;   
