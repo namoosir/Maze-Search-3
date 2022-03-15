@@ -250,7 +250,6 @@ void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double 
   double new_features[25];
   evaluateFeatures(gr, new_features, mouse_pos, cats, cheeses, size_X, graph_size);
 
-
   for (int i = 0; i<numFeatures; i++){
     weights[i] += alpha*(reward + lambda*Qsa(weights, new_features) - Qsa(weights, old_features))*old_features[i];
   }
@@ -316,7 +315,7 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
   new_mouse_pos[0][1] = j;
   int r =  QLearn_reward(gr, new_mouse_pos, cats, cheeses, size_X, graph_size);
 
-  evaluateFeatures(gr, old_features, new_mouse_pos, cats, cheeses, size_X, graph_size); //TECHNICALLY SHOULD BE OLD POSITION AND NOT NEW
+  evaluateFeatures(gr, old_features, mouse_pos, cats, cheeses, size_X, graph_size); //TECHNICALLY SHOULD BE OLD POSITION AND NOT NEW
 
   return(a);		// <--- of course, you will change this!    
 }
@@ -366,7 +365,7 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
 
   features[0] = cheese_dist/num_cheese;
   features[1] = cat_dist/num_cats;
-  // features[2] = 4 - (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3]);
+  //features[2] = 4 - (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3]);
   features[2] = rand() % 10;
   features[3] = abs(cats[0][0] - cheeses[0][0]) + abs(cats[0][1] - cheeses[0][1]);
   
