@@ -30,7 +30,7 @@
 #define lambda .5			// Discount rate for future rewards
 #define max_graph_size 32*32
 
-#define numFeatures 6		// UPDATE THIS to be the number of features you have
+#define numFeatures 16		// UPDATE THIS to be the number of features you have
 
 // Function prototypes for D84 - Unit 3 - Reinforcement Learning
 void QLearn_update(int s, int a, double r, int s_new, double *QTable);
@@ -50,6 +50,22 @@ int checkForGoal(int x, int y, int pos[5][2]);
 int gsizeX;
 double old_features[25];
 
-void state_to_locations(double state, double *cat, double *cheese, double *mouse, int num_cats, int num_cheese);
+//QUEUE
+typedef struct queue {
+	int items[max_graph_size];
+	int head;
+	int tail;
+} queue;
+
+queue* initQueue();
+void enqueue(queue* q, int x);
+void sorted_enqueue(queue* q, int x);
+int dequeue(queue* q);
+int emptyQueue(queue* q);
+void freeQueue(queue* q);
+
+int bfs(double gr[max_graph_size][4], int src[1][2], int dest[1][2], int size_X);
+
+void shortest_paths(double gr[max_graph_size][4]);
 #endif
 

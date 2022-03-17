@@ -343,8 +343,69 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
   return(a);		// <--- of course, you will change this!    
 }
 
+int shortest_matrix[max_graph_size][max_graph_size];
+
+void shortest_paths(double gr[max_graph_size][4], int size_X){
+ int graph[max_graph_size][max_graph_size];
+
+    for (int i = 0; i < max_graph_size; i++)
+    {
+      for (int j = 0; j < max_graph_size; j++)
+      {
+        graph[i][j] = 10000000;
+      }
+    }
+
+    for (int i = 0; i < max_graph_size; i++)
+    {
+      if (gr[i][1])
+        graph[i][i + 1] = 1;
+      if (gr[i][3])
+        graph[i][i - 1] = 1;
+      if (gr[i][0])
+        graph[i][i - size_X] = 1;
+      if (gr[i][2])
+        graph[i][i + size_X] = 1;
+      graph[i][i] = 0;
+    }
+
+    int i, j, k;
+
+    for (i = 0; i < max_graph_size; i++)
+      for (j = 0; j < max_graph_size; j++)
+        shortest_matrix[i][j] = graph[i][j];
+
+    for (k = 0; k < max_graph_size; k++)
+    {
+      for (i = 0; i < max_graph_size; i++)
+      {
+        for (j = 0; j < max_graph_size; j++)
+        {
+          if (shortest_matrix[i][k] + shortest_matrix[k][j] < shortest_matrix[i][j])
+            shortest_matrix[i][j] = shortest_matrix[i][k] + shortest_matrix[k][j];
+        }
+      }
+    }
+
+}
+
+int compare( const void* a, const void* b)
+{
+     double int_a = * ( (double*) a );
+     double int_b = * ( (double*) b );
+
+     if ( int_a == int_b ) return 0;
+     else if ( int_a < int_b ) return -1;
+     else return 1;
+}
+
 void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
 {
+  
+ static int called;
+ if (!called)
+	 shortest_paths(gr, size_X);
+ called = 1;
   /*
    This function evaluates all the features you defined for the game configuration given by the input
    mouse, cats, and cheese positions. You are free to define up to 25 features. This function will
@@ -373,34 +434,92 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
   int num_cats = 0;
   int cat_const = 1;
 
+  int temp_loc[1][2];
+
+
   for (int i = 0; i < 5; i++) {
     if (cheeses[i][0] != -1) num_cheese++;
     if (cats[i][0] != -1) num_cats++; 
   }
 
   for (int i = 0; i < num_cheese; i++) {
-    cheese_dist += abs(mouse_pos[0][0] - cheeses[i][0])+abs(mouse_pos[0][1] - cheeses[i][1]);
-  }
-  
-  for (int i = 0; i < num_cats; i++){
-    cat_dist += abs(mouse_pos[0][0] - cats[i][0])+abs(mouse_pos[0][1] - cats[i][1]);
+    // cheese_dist += abs(mouse_pos[0][0] - cheeses[i][0])+abs(mouse_pos[0][1] - cheeses[i][1]);
+    // temp_loc[0][0]= cheeses[i][0];
+    // temp_loc[0][1]= cheeses[i][1];
+    // cheese_dist += bfs(gr,mouse_pos, temp_loc, size_X);
+    cheese_dist += shortest_matrix[mouse_pos[0][0] + mouse_pos[0][1]*size_X][cheeses[i][0] + cheeses[i][1]*size_X];
   }
 
-  features[0] = ((cheese_dist+1)/num_cheese)/graph_size;
-  features[1] = ((cat_dist+1)/num_cats)/graph_size;
-  features[2] = rand() % 3;
-  features[3] = (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3])/4;
+  for (int i = 0; i < num_cats; i++){
+    // cat_dist += abs(mouse_pos[0][0] - cats[i][0])+abs(mouse_pos[0][1] - cats[i][1]);
+    // temp_loc[0][0]= cats[i][0];
+    // temp_loc[0][1]= cats[i][1];
+    // cat_dist += bfs(gr,mouse_pos, temp_loc, size_X);
+    cat_dist += shortest_matrix[cats[i][0] + cats[i][1]*size_X][mouse_pos[0][0] + mouse_pos[0][1]*size_X];
+  }
+
+  features[0] = (cheese_dist/num_cheese)/(graph_size);
+  features[1] = (cat_dist/num_cats)/(graph_size);
+  features[2] = (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3])/4;
+  
+  
+  //features[3] = (abs(cheeses[0][0] - cats[0][0])+abs(cheeses[0][1] - cats[0][1]))/(double)graph_size;
+
   //DIstance to closest cheese
   //Distance to closet cat
     // features[3] = rand() % 5;
-  features[4] = cheese_dist/graph_size;
-  features[5] = cat_dist/graph_size;
+  //features[4] = cheese_dist/graph_size;
+  //features[5] = cat_dist/graph_size;
   // features[6] = (mouse_pos[0][0])/(double)size_X;
   // features[7] = (mouse_pos[0][1])/(double)size_X;
 
   // printf("features[0] = %f, features[1] = %f, features[2] = %f, features[4] = %f\n", features[0], features[1], features[2], features[4]);
 
   //add all cat distances as sperate features and all cheese distancews
+  for (int i = 0; i < numFeatures; i++){
+    features[i] = 0;
+  }
+  
+  double cat_distances[num_cats];
+
+  for (int i = 0; i < num_cats; i++) {
+    cat_distances[i] = shortest_matrix[cats[i][0] + cats[i][1]*size_X][mouse_pos[0][0] + mouse_pos[0][1]*size_X];
+  }
+
+  double cheese_distances[num_cheese];
+
+  for (int i = 0; i < num_cheese; i++) {
+    cheese_distances[i] = shortest_matrix[cheeses[i][0] + cheeses[i][1]*size_X][mouse_pos[0][0] + mouse_pos[0][1]*size_X];
+  }
+
+  qsort( cat_distances, num_cats, sizeof(double), compare );
+  qsort( cheese_distances, num_cheese, sizeof(double), compare );
+  
+  for (int i = 0; i < num_cats; i++) {
+    features[i] = cat_distances[i]/graph_size;
+  }
+
+  for (int i = 5; i < 5+num_cheese; i++) {
+    features[i] = cheese_distances[i-5]/graph_size;
+  }
+
+  // for (int i = 10; i < 10+num_cheese; i++) {
+  //   for (int j = 0; j < num_cheese; j++) {
+  //     if (cheese_distances[i-10] == shortest_matrix[cheeses[j][0] + cheeses[j][1]*size_X][mouse_pos[0][0] + mouse_pos[0][1]*size_X]) {
+  //       features[i] = (gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][0] + gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][1] + gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][2] + gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][3])/4;
+  //     }
+  //   }
+  // }
+
+  features[15] = (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3])/4;
+
+
+// printf("\n");
+//  for (int i = 0; i < numFeatures; i++){
+//     printf("feat %d is %f\n", i, features[i]);
+//  }
+// printf("\n");
+
 }
 
 double Qsa(double weights[25], double features[25])
@@ -462,14 +581,15 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
     new_mouse_pos[0][0] = i;
     new_mouse_pos[0][1] = j;
   
-    evaluateFeatures(gr, features, new_mouse_pos, cats, cheeses, size_X, graph_size);
+    if(gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][index]){
+      evaluateFeatures(gr, features, new_mouse_pos, cats, cheeses, size_X, graph_size);
 
-    if(gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][index] && Qsa(weights,features) > *maxU){
-      *maxU = Qsa(weights,features);
-      *maxA = index;
+      if(Qsa(weights,features) > *maxU){
+        *maxU = Qsa(weights,features);
+        *maxA = index;
+      }
     }
   }
-
   return;   
 }
 
@@ -478,15 +598,165 @@ void maxQsa(double gr[max_graph_size][4],double weights[25],int mouse_pos[1][2],
  *                 ---->  THIS BOX <-----
  * *************************************************************************************************/
 
-void state_to_locations(double state, double *cat, double *cheese, double *mouse, int num_cats, int num_cheese){
+//-------CODE FOR QUEUE----REFRENCE FROM https://www.programiz.com/dsa/floyd-warshall-algorithm
+queue* initQueue() {
+	queue* q = (queue*)malloc(sizeof(queue));
+	q->head=-1;
+	q->tail=-1;
+	return q;
+}
+void enqueue(queue* q, int x) {
+	if (q->tail!=max_graph_size-1) {
+		if (q->head==-1) {
+			q->head = 0;
+		}
+		q->tail++;
+		q->items[q->tail] = x;
+	}
+}
+int dequeue(queue* q) {
+	int item;
+	if (!emptyQueue(q)) {
+		item = q->items[q->head];
+		q->head++;
+		if (q->head > q->tail) {
+			q->head = -1;
+			q->tail = -1;
+		}
+	} else {
+		return -1;
+	}
+	return item;
+}
+int emptyQueue(queue* q) {
+	if (q->tail == -1) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
 
-  //if mode standard
-  //States = mouse + numcats*cat*(graphsize) + cheese*(graphsize)*numcheese*numcats*(graphsize)
+void freeQueue(queue* q) {
+	free(q);
+}
 
-  //States = mouse + cat*(graphsize) + cheese*(graphsize)*(graphsize)
+int bfs(double gr[max_graph_size][4], int src[1][2], int dest[1][2], int size_X)
+{
+  gsizeX = size_X;
+  int graph_size = size_X*size_X;
+	queue* q = initQueue();
 
-  *cheese = floor(state/pow(gsizeX, 4));
-  *cat = floor((state-(*cheese * pow(gsizeX, 4)))/(pow(gsizeX, 2)));
-  *mouse = state - *cheese*pow(gsizeX, 4) - *cheese*pow(gsizeX, 2);
-  return;
+  int visit_order[graph_size][graph_size];
+  
+  for (int i = 0; i < graph_size; i++) {
+    for (int j = 0; j < graph_size; j++) {
+      visit_order[i][j] = 0;
+    }
+  }
+
+	int num_visited = 1;
+	int found_x = -1, found_y = -1;
+	int cur,cur_x,cur_y;
+	int start = src[0][0] + src[0][1]*size_X;
+
+  visit_order[src[0][0]][src[0][1]] = num_visited;
+  
+  int x,y;
+
+	int pred[graph_size];
+
+	for (int i = 0; i < graph_size; i++) {
+		pred[i] = -1;
+	}
+
+	enqueue(q, start);
+
+	while(!emptyQueue(q)) {
+
+		cur = dequeue(q);
+		cur_x = cur % size_X;
+		cur_y = cur/size_X;
+
+		if (cur_x == dest[0][0] && cur_y == dest[0][1]) {
+				found_x = cur_x;
+				found_y = cur_y;
+				break;
+		}
+
+    x = (cur-size_X) % gsizeX;
+    y = (cur-size_X)/gsizeX;
+		if (gr[cur][0] != 0 && !(visit_order[x][y]>0)) {
+			enqueue(q, cur-size_X);
+			num_visited++;
+      
+      x = (cur-size_X) % gsizeX;
+      y = (cur-size_X)/gsizeX;
+      visit_order[x][y] = num_visited;
+      
+			pred[cur-size_X] = cur;
+		}
+
+    x = (cur+1) % gsizeX;
+    y = (cur+1)/gsizeX;
+		if (gr[cur][1] != 0 && !(visit_order[x][y]>0)) {
+			enqueue(q, cur+1);
+			num_visited++;
+      
+      x = (cur+1) % gsizeX;
+      y = (cur+1)/gsizeX;
+      visit_order[x][y] = num_visited;
+
+			pred[cur+1] = cur;
+		}
+
+    x = (cur+size_X) % gsizeX;
+    y = (cur+size_X)/gsizeX;
+		if (gr[cur][2] != 0 && !(visit_order[x][y]>0)) {
+			enqueue(q, cur+size_X);
+			num_visited++;
+
+      x = (cur+size_X) % gsizeX;
+      y = (cur+size_X)/gsizeX;
+      visit_order[x][y] = num_visited;
+
+			pred[cur+size_X] = cur;
+		}
+
+    x = (cur-1) % gsizeX;
+    y = (cur-1)/gsizeX;
+		if (gr[cur][3] != 0 && !(visit_order[x][y]>0)) {
+			enqueue(q, cur-1);
+			num_visited++;
+
+      x = (cur-1) % gsizeX;
+      y = (cur-1)/gsizeX;
+      visit_order[x][y] = num_visited;
+
+			pred[cur-1] = cur;
+		}
+	}
+	
+	freeQueue(q);
+
+	int counter = 0;
+	int temp_x = found_x;
+	int temp_y = found_y;
+	int temp_pred;
+
+	if(temp_x == -1 || temp_y == -1){
+		return -1; // should not happen
+	}
+
+  //printf("counter %d, tempx, tempy (%d,%d), dest (%d,%d), source (%d, %d)\n", counter,temp_x,temp_y, dest[0][0], dest[0][1], src[0][0], src[0][1]);
+	while (pred[temp_x + temp_y*size_X] != -1) {
+		temp_pred = pred[temp_x + temp_y*size_X] % size_X;
+		temp_y = pred[temp_x + temp_y*size_X] / size_X;
+		temp_x = temp_pred;
+		counter++;
+    //printf("counter %d, tempx, tempy (%d,%d), dest (%d,%d), source (%d, %d)\n", counter,temp_x,temp_y, dest[0][0], dest[0][1], src[0][0], src[0][1]);
+    //if (counter == 20) exit(0);
+	}
+
+  //free(visit_order);
+	return counter;
 }
