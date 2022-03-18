@@ -209,24 +209,44 @@ double QLearn_reward(double gr[max_graph_size][4], int mouse_pos[1][2], int cats
    ***********************************************************************************************/
 
   //Assume mode standatd
+static int called;
+ if (!called)
+	 shortest_paths(gr, size_X);
+ called = 1;
+
   double reward = 0;
   int num_cats = 0, num_cheese = 0;
+  int closest_cat = max_graph_size;
+  int closest_cheese = max_graph_size;
+  
   for (int i = 0; i < 5; i++){
     if (cats[i][0] != -1) num_cats++;
     if (cheeses[i][0] != -1) num_cheese++;
   }
-  
+
   for (int i = 0; i < num_cats; i++){
-    if (mouse_pos[0][0] == cats[i][0] && mouse_pos[0][1] == cats[i][1])
-      reward -= 0.9;
+   if(shortest_matrix[mouse_pos[0][0] + mouse_pos[0][1]*size_X][cats[0][0] + cats[0][1]*size_X] < closest_cat)
+    closest_cat = shortest_matrix[mouse_pos[0][0] + mouse_pos[0][1]*size_X][cats[i][0] + cats[i][1]*size_X];
+  }  
+
+  for (int i = 0; i < num_cheese; i++){
+    if (closest_cheese > shortest_matrix[mouse_pos[0][0] + mouse_pos[0][1]*size_X][cheeses[i][0] + cheeses[i][1]*size_X])
+      closest_cheese = shortest_matrix[mouse_pos[0][0] + mouse_pos[0][1]*size_X][cheeses[i][0] + cheeses[i][1]*size_X];
   }
 
   for (int i = 0; i < num_cheese; i++){
     if (mouse_pos[0][0] == cheeses[0][0] && mouse_pos[0][1] == cheeses[0][1])
-      reward += 1/num_cheese;
+      return 2.1;
   }
   
-  return(reward);   
+  for (int i = 0; i < num_cats; i++){
+    if (mouse_pos[0][0] == cats[i][0] && mouse_pos[0][1] == cats[i][1])
+      return -2;
+  }
+
+  //printf("value is %d\n",shortest_matrix[mouse_pos[0][0] + mouse_pos[0][1]*size_X][cats[0][0] + cats[0][1]*size_X]-shortest_matrix[mouse_pos[0][0] + mouse_pos[0][1]*size_X][cheeses[0][0] + cheeses[0][1]*size_X]);
+  reward = (closest_cat-2*closest_cheese)/(double) graph_size;
+  return reward;
 }
 
 void feat_QLearn_update(double gr[max_graph_size][4],double weights[25], double reward, int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
@@ -343,8 +363,6 @@ int feat_QLearn_action(double gr[max_graph_size][4],double weights[25], int mous
   return(a);		// <--- of course, you will change this!    
 }
 
-int shortest_matrix[max_graph_size][max_graph_size];
-
 void shortest_paths(double gr[max_graph_size][4], int size_X){
  int graph[max_graph_size][max_graph_size];
 
@@ -402,10 +420,10 @@ int compare( const void* a, const void* b)
 void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mouse_pos[1][2], int cats[5][2], int cheeses[5][2], int size_X, int graph_size)
 {
   
- static int called;
- if (!called)
-	 shortest_paths(gr, size_X);
- called = 1;
+//  static int called;
+//  if (!called)
+// 	 shortest_paths(gr, size_X);
+//  called = 1;
   /*
    This function evaluates all the features you defined for the game configuration given by the input
    mouse, cats, and cheese positions. You are free to define up to 25 features. This function will
@@ -458,9 +476,9 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
     cat_dist += shortest_matrix[cats[i][0] + cats[i][1]*size_X][mouse_pos[0][0] + mouse_pos[0][1]*size_X];
   }
 
-  features[0] = (cheese_dist/num_cheese)/(graph_size);
-  features[1] = (cat_dist/num_cats)/(graph_size);
-  features[2] = (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3])/4;
+  // features[0] = ((cheese_dist/num_cheese))/(graph_size);
+  // features[1] = (cat_dist/num_cats)/(graph_size);
+  // features[2] = (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3])/4;
   
   
   //features[3] = (abs(cheeses[0][0] - cats[0][0])+abs(cheeses[0][1] - cats[0][1]))/(double)graph_size;
@@ -503,13 +521,13 @@ void evaluateFeatures(double gr[max_graph_size][4],double features[25], int mous
     features[i] = cheese_distances[i-5]/graph_size;
   }
 
-  // for (int i = 10; i < 10+num_cheese; i++) {
-  //   for (int j = 0; j < num_cheese; j++) {
-  //     if (cheese_distances[i-10] == shortest_matrix[cheeses[j][0] + cheeses[j][1]*size_X][mouse_pos[0][0] + mouse_pos[0][1]*size_X]) {
-  //       features[i] = (gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][0] + gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][1] + gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][2] + gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][3])/4;
-  //     }
-  //   }
-  // }
+  for (int i = 10; i < 10+num_cheese; i++) {
+    for (int j = 0; j < num_cheese; j++) {
+      if (cheese_distances[i-10] == shortest_matrix[cheeses[j][0] + cheeses[j][1]*size_X][mouse_pos[0][0] + mouse_pos[0][1]*size_X]) {
+        features[i] = (gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][0] + gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][1] + gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][2] + gr[(cheeses[j][0]+(cheeses[j][1]*size_X))][3])/4;
+      }
+    }
+  }
 
   features[15] = (gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][0] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][1] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][2] + gr[(mouse_pos[0][0]+(mouse_pos[0][1]*size_X))][3])/4;
 

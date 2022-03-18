@@ -66,6 +66,7 @@ void freeQueue(queue* q);
 
 int bfs(double gr[max_graph_size][4], int src[1][2], int dest[1][2], int size_X);
 
-void shortest_paths(double gr[max_graph_size][4]);
+void shortest_paths(double gr[max_graph_size][4], int size_X);
+int shortest_matrix[max_graph_size][max_graph_size];
 #endif
 
