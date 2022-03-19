@@ -47,26 +47,10 @@ void expensiveFeature1(double gr[max_graph_size][4], int path[max_graph_size][2]
 int checkForGoal(int x, int y, int pos[5][2]);
 
 // If you need to add any function prototypes yourself, you can do so *below* this line.
-int gsizeX;
 double old_features[25];
-
-//QUEUE
-typedef struct queue {
-	int items[max_graph_size];
-	int head;
-	int tail;
-} queue;
-
-queue* initQueue();
-void enqueue(queue* q, int x);
-void sorted_enqueue(queue* q, int x);
-int dequeue(queue* q);
-int emptyQueue(queue* q);
-void freeQueue(queue* q);
-
-int bfs(double gr[max_graph_size][4], int src[1][2], int dest[1][2], int size_X);
 
 void shortest_paths(double gr[max_graph_size][4], int size_X);
 int shortest_matrix[max_graph_size][max_graph_size];
+int compare( const void* a, const void* b);
 #endif
 
